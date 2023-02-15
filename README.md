@@ -254,6 +254,22 @@ FROM customer_segment
 ORDER BY Recency DESC, Monetary DESC;
 ```
 
+***Sample of the Output:***
+
+
+|  CUSTOMER_ID    |  RECENCY    |  MONETARY    |  CUSTOMER_SEGMENT    |
+|     :---:    |     :---:    |     :---:    |     :---:    |
+| 12913 | 5 | 5 | Champions |
+| 12886 | 5 | 4 | Champions |
+| 12967 | 5 | 4 | Champions |
+| 12849 | 5 | 3 |  Loyal Customers |
+| 12944 | 5 | 3 | Loyal Customers |
+| 12872 | 5 | 3 | Loyal Customers |
+| 12838 | 5 | 3 | Loyal Customers |
+| 12878 | 5 | 3 | Loyal Customers |
+| 12888 | 5 | 2 | Potential Loyalists  |
+| 12873 | 5 | 2 | Potential Loyalists |
+
 ------------------------------------------------------
 
 ## 🔗 Get In Touch
