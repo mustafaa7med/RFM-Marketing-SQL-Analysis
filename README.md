@@ -1,4 +1,7 @@
 # RFM Marketing Analysis with Analytical SQL
+
+Marketing Analysis on an online store using RFM Analytical Model with Analytical SQL
+
 ### What's RFM Analysis?
 ***RFM*** Stands for ***Recency***, ***Frequency*** and ***Monetary*** which is a form of analysis often used in Marketing which segments customers based on those 3 factors.
 
