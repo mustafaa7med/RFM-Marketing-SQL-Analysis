@@ -150,12 +150,12 @@ ORDER BY Total_Price DESC;
 ```sql
 -- Step #1 - Extracting the highest date of each employee along with their order frequency and total price paid
 SELECT customer_id,
-                        MAX(invoicedate) AS Last_Date,
-                        COUNT(invoice) AS Order_Count,
-                        SUM(price*quantity) AS Total_Price
-            FROM tableretail
-            GROUP BY customer_id
-            ORDER BY customer_id;
+       MAX(invoicedate) AS Last_Date,
+       COUNT(invoice) AS Order_Count,
+       SUM(price*quantity) AS Total_Price
+FROM tableretail
+GROUP BY customer_id
+ORDER BY customer_id;
 ```
 
 ### Step #2
@@ -163,17 +163,17 @@ SELECT customer_id,
 ```sql
 -- Step #2 figuring out the recency of ordering per customer
 SELECT customer_id,
-            Last_Date,
-            ROUND((ROUND(MONTHS_BETWEEN(TO_DATE('12/9/2011 12:20','MM/DD/YYYY HH24:MI'),TO_DATE(Last_Date,'MM/DD/YYYY HH24:MI')),2)/30)*1000,0) Recency,
-            Order_Count,
-            Total_Price
+       Last_Date,
+       ROUND((ROUND(MONTHS_BETWEEN(TO_DATE('12/9/2011 12:20','MM/DD/YYYY HH24:MI'),TO_DATE(Last_Date,'MM/DD/YYYY HH24:MI')),2)/30)*1000,0) Recency,
+       Order_Count,
+       Total_Price
 FROM (SELECT customer_id,
                         MAX(invoicedate) AS Last_Date,
                         COUNT(invoice) AS Order_Count,
                         SUM(price*quantity) AS Total_Price
-            FROM tableretail
-            GROUP BY customer_id
-            ORDER BY customer_id) inner_table
+       FROM tableretail
+       GROUP BY customer_id
+       ORDER BY customer_id) inner_table
 ORDER BY Recency;
 ```
 
@@ -182,20 +182,20 @@ ORDER BY Recency;
 ```sql
 -- Step #3 using NTILE to segment the 2 factors (Recency and Monetary) *removed frequency since it indicates the volume as Monetary does* to segment customers in the next step
 SELECT customer_id,
-            NTILE(5) OVER(ORDER BY Recency) AS Recency,
-            NTILE(5) OVER(ORDER BY Total_Price) AS Monetary
+       NTILE(5) OVER(ORDER BY Recency) AS Recency,
+       NTILE(5) OVER(ORDER BY Total_Price) AS Monetary
 FROM( SELECT customer_id,
-            Last_Date,
-            ROUND((ROUND(MONTHS_BETWEEN(TO_DATE('12/9/2011 12:20','MM/DD/YYYY HH24:MI'),TO_DATE(Last_Date,'MM/DD/YYYY HH24:MI')),2)/30)*1000,0) Recency,
-            Order_Count,
-            Total_Price
+             Last_Date,
+             ROUND((ROUND(MONTHS_BETWEEN(TO_DATE('12/9/2011 12:20','MM/DD/YYYY HH24:MI'),TO_DATE(Last_Date,'MM/DD/YYYY HH24:MI')),2)/30)*1000,0) Recency,
+             Order_Count,
+             Total_Price
             FROM (SELECT customer_id,
-                                    MAX(invoicedate) AS Last_Date,
-                                    COUNT(invoice) AS Order_Count,
-                                    SUM(price*quantity) AS Total_Price
-                        FROM tableretail
-                        GROUP BY customer_id
-                        ORDER BY customer_id) inner_table) outer_table;
+                         MAX(invoicedate) AS Last_Date,
+                         COUNT(invoice) AS Order_Count,
+                         SUM(price*quantity) AS Total_Price
+                  FROM tableretail
+                  GROUP BY customer_id
+                  ORDER BY customer_id) inner_table) outer_table;
 ```
 
 ### Step #4
@@ -205,50 +205,50 @@ FROM( SELECT customer_id,
 WITH customer_segment AS
 (
 SELECT customer_id,
-            NTILE(5) OVER(ORDER BY Recency) AS Recency,
-            NTILE(5) OVER(ORDER BY Total_Price) AS Monetary
+       NTILE(5) OVER(ORDER BY Recency) AS Recency,
+       NTILE(5) OVER(ORDER BY Total_Price) AS Monetary
 FROM( SELECT customer_id,
-            Last_Date,
-            ROUND((ROUND(MONTHS_BETWEEN(TO_DATE('12/9/2011 12:20','MM/DD/YYYY HH24:MI'),TO_DATE(Last_Date,'MM/DD/YYYY HH24:MI')),2)/30)*1000,0) Recency,
-            Order_Count,
-            Total_Price
-            FROM (SELECT customer_id,
-                                    MAX(invoicedate) AS Last_Date,
-                                    COUNT(invoice) AS Order_Count,
-                                    SUM(price*quantity) AS Total_Price
-                        FROM tableretail
-                        GROUP BY customer_id
-                        ORDER BY customer_id) inner_table) outer_table
+             Last_Date,
+             ROUND((ROUND(MONTHS_BETWEEN(TO_DATE('12/9/2011 12:20','MM/DD/YYYY HH24:MI'),TO_DATE(Last_Date,'MM/DD/YYYY HH24:MI')),2)/30)*1000,0) Recency,
+             Order_Count,
+             Total_Price
+       FROM (SELECT customer_id,
+                    MAX(invoicedate) AS Last_Date,
+                    COUNT(invoice) AS Order_Count,
+                    SUM(price*quantity) AS Total_Price
+             FROM tableretail
+             GROUP BY customer_id
+             ORDER BY customer_id) inner_table) outer_table
 )
 
 -- Segmenting Customers
 SELECT customer_id,
-            Recency,
-            Monetary,
-            CASE WHEN Recency = 5 AND Monetary = 5 THEN 'Champions'
-                     WHEN Recency = 4 AND Monetary = 5 THEN 'Champions'
-                     WHEN Recency = 5 AND Monetary = 4 THEN 'Champions'
-                     WHEN Recency = 5 AND Monetary = 2 THEN 'Potential Loyalists'
-                     WHEN Recency = 4 AND Monetary = 2 THEN 'Potential Loyalists'
-                     WHEN Recency = 4 AND Monetary = 3 THEN 'Potential Loyalists'
-                     WHEN Recency = 3 AND Monetary = 3 THEN 'Potential Loyalists'
-                     WHEN Recency = 5 AND Monetary = 3 THEN 'Loyal Customers'
-                     WHEN Recency = 4 AND Monetary = 4 THEN 'Loyal Customers'
-                     WHEN Recency = 3 AND Monetary = 5 THEN 'Loyal Customers'
-                     WHEN Recency = 3 AND Monetary = 4 THEN 'Loyal Customers'
-                     WHEN Recency = 5 AND Monetary = 1 THEN 'Recent Customers'
-                     WHEN Recency = 4 AND Monetary = 1 THEN 'Promising'
-                     WHEN Recency = 3 AND Monetary = 1 THEN 'Promising'
-                     WHEN Recency = 3 AND Monetary = 2 THEN 'Customers Needing Attention'
-                     WHEN Recency = 2 AND Monetary = 3 THEN 'Customers Needing Attention'
-                     WHEN Recency = 2 AND Monetary = 2 THEN 'Customers Needing Attention'
-                     WHEN Recency = 2 AND Monetary = 5 THEN 'At Risk'
-                     WHEN Recency = 2 AND Monetary = 4 THEN 'At Risk'
-                     WHEN Recency = 1 AND Monetary = 3 THEN 'At Risk'
-                     WHEN Recency = 1 AND Monetary = 5 THEN 'Cannot Lose Them'
-                     WHEN Recency = 1 AND Monetary = 4 THEN 'Cannot Lose Them'
-                     WHEN Recency = 1 AND Monetary = 2 THEN 'Hibernating'
-                     WHEN Recency = 1 AND Monetary = 1 THEN 'Lost'
+       Recency,
+       Monetary,
+       CASE WHEN Recency = 5 AND Monetary = 5 THEN 'Champions'
+            WHEN Recency = 4 AND Monetary = 5 THEN 'Champions'
+            WHEN Recency = 5 AND Monetary = 4 THEN 'Champions'
+            WHEN Recency = 5 AND Monetary = 2 THEN 'Potential Loyalists'
+            WHEN Recency = 4 AND Monetary = 2 THEN 'Potential Loyalists'
+            WHEN Recency = 4 AND Monetary = 3 THEN 'Potential Loyalists'
+            WHEN Recency = 3 AND Monetary = 3 THEN 'Potential Loyalists'
+            WHEN Recency = 5 AND Monetary = 3 THEN 'Loyal Customers'
+            WHEN Recency = 4 AND Monetary = 4 THEN 'Loyal Customers'
+            WHEN Recency = 3 AND Monetary = 5 THEN 'Loyal Customers'
+            WHEN Recency = 3 AND Monetary = 4 THEN 'Loyal Customers'
+            WHEN Recency = 5 AND Monetary = 1 THEN 'Recent Customers'
+            WHEN Recency = 4 AND Monetary = 1 THEN 'Promising'
+            WHEN Recency = 3 AND Monetary = 1 THEN 'Promising'
+            WHEN Recency = 3 AND Monetary = 2 THEN 'Customers Needing Attention'
+            WHEN Recency = 2 AND Monetary = 3 THEN 'Customers Needing Attention'
+            WHEN Recency = 2 AND Monetary = 2 THEN 'Customers Needing Attention'
+            WHEN Recency = 2 AND Monetary = 5 THEN 'At Risk'
+            WHEN Recency = 2 AND Monetary = 4 THEN 'At Risk'
+            WHEN Recency = 1 AND Monetary = 3 THEN 'At Risk'
+            WHEN Recency = 1 AND Monetary = 5 THEN 'Cannot Lose Them'
+            WHEN Recency = 1 AND Monetary = 4 THEN 'Cannot Lose Them'
+            WHEN Recency = 1 AND Monetary = 2 THEN 'Hibernating'
+            WHEN Recency = 1 AND Monetary = 1 THEN 'Lost'
             END Customer_Segment
 FROM customer_segment
 ORDER BY Recency DESC, Monetary DESC;
