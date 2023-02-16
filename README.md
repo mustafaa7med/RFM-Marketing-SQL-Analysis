@@ -273,6 +273,5 @@ ORDER BY Recency DESC, Monetary DESC;
 ------------------------------------------------------
 
 ## 🔗 Get In Touch
-[![Email](https://img.shields.io/badge/Email_Me-000?style=for-the-badge&logo=ko-fi&logoColor=white)](mailto:mustafaa7med@gmail.com)
-
+<a href="mailto:mustafaa7med@gmail.com"><img alt="Gmail" title="Moustafa Ahmed's Gmail" src="https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white"></a>
 [![linkedin](https://img.shields.io/badge/linkedin-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/mustafaa7med)
