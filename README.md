@@ -42,7 +42,7 @@ FROM tableretail
 ORDER BY Number_Of_Orders DESC;
 ```
 
-***Sample of the Output:***
+***Output Sample:***
 
 |  INVOICEDATE    |  NUMBER_OF_ORDERS    |
 |     :---:    |     :---:    |
@@ -67,7 +67,7 @@ FROM tableretail
 ORDER BY Total_Quantities_Per_Date DESC;
 ```
 
-***Sample of the Output:***
+***Output Sample:***
 
 |  INVOICEDATE    |  TOTAL_QUANTITIES_PER_DATE    |
 |     :---:    |     :---:    |
@@ -92,7 +92,7 @@ FROM tableretail
 ORDER BY Total_Price_Of_Orders DESC;
 ```
 
-***Sample of the Output:***
+***Output Sample:***
 
 
 |  INVOICEDATE    |  TOTAL_PRICCE_OF_ORDERS    |
@@ -118,7 +118,7 @@ SELECT DISTINCT customer_id,
 FROM tableretail
 ORDER BY Total_Price DESC;
 ```
-***Sample of the Output:***
+***Output Sample:***
 
 
 |  CUSTOMER_ID    |  INVOICEDATE    |  TOTAL_PRICE    |
@@ -146,11 +146,11 @@ ORDER BY Total_Price DESC;
 ## Customer Segmentation using RFM
 
 ### Step #1
-
+***Extracting the highest date of each employee along with their order frequency and total price paid***
 ```sql
 -- Step #1 - Extracting the highest date of each employee along with their order frequency and total price paid
 SELECT customer_id,
-       MAX(invoicedate) AS Last_Date,
+       MAX(TO_DATE(invoicedate, 'MM/DD/YYYY HH24:MI')) AS Last_Date,
        COUNT(invoice) AS Order_Count,
        SUM(price*quantity) AS Total_Price
 FROM tableretail
@@ -159,26 +159,26 @@ ORDER BY customer_id;
 ```
 
 ### Step #2
-
+***Figuring out the recency of ordering per customer***
 ```sql
 -- Step #2 figuring out the recency of ordering per customer
 SELECT customer_id,
-       Last_Date,
-       ROUND((ROUND(MONTHS_BETWEEN(TO_DATE('12/9/2011 12:20','MM/DD/YYYY HH24:MI'),TO_DATE(Last_Date,'MM/DD/YYYY HH24:MI')),2)/30)*1000,0) Recency,
-       Order_Count,
-       Total_Price
+            Last_Date,
+            ROUND((ROUND(MONTHS_BETWEEN(TO_DATE('12/9/2011 12:20','MM/DD/YYYY HH24:MI'),Last_Date),2)/30)*1000,0) Recency,
+            Order_Count,
+            Total_Price
 FROM (SELECT customer_id,
-                        MAX(invoicedate) AS Last_Date,
-                        COUNT(invoice) AS Order_Count,
-                        SUM(price*quantity) AS Total_Price
-       FROM tableretail
-       GROUP BY customer_id
-       ORDER BY customer_id) inner_table
+             MAX(TO_DATE(invoicedate, 'MM/DD/YYYY HH24:MI')) AS Last_Date,
+             COUNT(invoice) AS Order_Count,
+             SUM(price*quantity) AS Total_Price
+     FROM tableretail
+     GROUP BY customer_id
+     ORDER BY customer_id) inner_table
 ORDER BY Recency;
 ```
 
 ### Step #3
-
+***Using NTILE to segment the 2 factors (Recency and Monetary) *removed frequency since it indicates the volume as Monetary does* to segment customers in the next step***
 ```sql
 -- Step #3 using NTILE to segment the 2 factors (Recency and Monetary) *removed frequency since it indicates the volume as Monetary does* to segment customers in the next step
 SELECT customer_id,
@@ -186,20 +186,20 @@ SELECT customer_id,
        NTILE(5) OVER(ORDER BY Total_Price) AS Monetary
 FROM( SELECT customer_id,
              Last_Date,
-             ROUND((ROUND(MONTHS_BETWEEN(TO_DATE('12/9/2011 12:20','MM/DD/YYYY HH24:MI'),TO_DATE(Last_Date,'MM/DD/YYYY HH24:MI')),2)/30)*1000,0) Recency,
+             ROUND((ROUND(MONTHS_BETWEEN(TO_DATE('12/9/2011 12:20','MM/DD/YYYY HH24:MI'),Last_Date),2)/30)*1000,0) Recency,
              Order_Count,
              Total_Price
-            FROM (SELECT customer_id,
-                         MAX(invoicedate) AS Last_Date,
-                         COUNT(invoice) AS Order_Count,
-                         SUM(price*quantity) AS Total_Price
-                  FROM tableretail
-                  GROUP BY customer_id
-                  ORDER BY customer_id) inner_table) outer_table;
+       FROM (SELECT customer_id,
+                    MAX(TO_DATE(invoicedate, 'MM/DD/YYYY HH24:MI')) AS Last_Date,
+                    COUNT(invoice) AS Order_Count,
+                    SUM(price*quantity) AS Total_Price
+             FROM tableretail
+             GROUP BY customer_id
+             ORDER BY customer_id) inner_table) outer_table;
 ```
 
 ### Step #4
-
+***Segmenting the customers based on (Recency and Monetary) Scores***
 ```sql
 -- Step #4 Segmenting the customers based on (Recency and Monetary) Scores
 WITH customer_segment AS
@@ -254,20 +254,20 @@ FROM customer_segment
 ORDER BY Recency DESC, Monetary DESC;
 ```
 
-***Sample of the Output:***
+***Output Sample:***
 
 
 |  CUSTOMER_ID    |  RECENCY    |  MONETARY    |  CUSTOMER_SEGMENT    |
 |     :---:    |     :---:    |     :---:    |     :---:    |
-| 12913 | 5 | 5 | Champions |
-| 12886 | 5 | 4 | Champions |
+| 12868 | 5 | 4 | Champions |
 | 12967 | 5 | 4 | Champions |
-| 12849 | 5 | 3 |  Loyal Customers |
-| 12944 | 5 | 3 | Loyal Customers |
-| 12872 | 5 | 3 | Loyal Customers |
-| 12838 | 5 | 3 | Loyal Customers |
+| 12908 | 5 | 3 | Loyal Customers |
 | 12878 | 5 | 3 | Loyal Customers |
-| 12888 | 5 | 2 | Potential Loyalists  |
+| 12857 | 5 | 3 | Loyal Customers |
+| 12872 | 5 | 3 | Loyal Customers |
+| 12891 | 5 | 2 | Potential Loyalists |
+| 12845 | 5 | 2 | Potential Loyalists |
+| 12888 | 5 | 2 | Potential Loyalists |
 | 12873 | 5 | 2 | Potential Loyalists |
 
 ------------------------------------------------------
