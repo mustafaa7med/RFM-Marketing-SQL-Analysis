@@ -271,6 +271,11 @@ ORDER BY Recency DESC, Monetary DESC;
 | 12873 | 5 | 2 | Potential Loyalists |
 
 ------------------------------------------------------
+### Conclusion:
+- Based on our customer segmentation analysis, we have identified five distinct customer groups, with scores ranging from 1 to 5. With this information, we can recommend to the marketing team to focus on developing a customized plan to target customers who have a score of 3 to 5. These customers are highly active and considered loyal, and nurturing their loyalty through targeted marketing efforts can help retain them.
+- On the other hand, customers with a score of 1 and 2 are most likely churned, and any marketing plan may not be as effective in re-engaging them. By focusing on the right customer groups, the marketing team can optimize their efforts and achieve better results.
+
+------------------------------------------------------
 
 ## 🔗 Get In Touch
 <a href="mailto:mustafaa7med@gmail.com"><img alt="Gmail" title="Moustafa Ahmed's Gmail" src="https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white"></a>
