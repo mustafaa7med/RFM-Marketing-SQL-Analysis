@@ -17,14 +17,18 @@ Marketing Analysis on an online store using RFM Analytical Model with Analytical
 
 ------------------------------------------------------
 
+## Finding Number of Customers, Orders, and Average Paid Price per Country
+
 ```sql
 -- Finding # of customers, # of orders and the avg paid price per country 
-SELECT DISTINCT country,
-                COUNT(DISTINCT invoice) OVER(PARTITION BY country) AS Number_Of_Orders,
-                COUNT(DISTINCT customer_id) OVER(PARTITION BY country) AS Number_Of_Customers,
-                ROUND(AVG(price*quantity) OVER(PARTITION BY country),2) AS Avg_Payment
-FROM tableretail
-ORDER BY Number_Of_Orders DESC, Number_Of_Customers DESC;
+  SELECT  DISTINCT country                           AS country,
+          COUNT(DISTINCT invoice)                    AS Number_Of_Orders,
+          COUNT(DISTINCT customer_id)                AS Number_Of_Customers,
+          ROUND(AVG(price * quantity), 2)            AS Avg_Payment
+    FROM  tableretail
+GROUP BY  1
+ORDER BY  2 DESC,		
+          3 DESC;
 ```
 ***Output:***
 
@@ -34,19 +38,22 @@ ORDER BY Number_Of_Orders DESC, Number_Of_Customers DESC;
 
 ------------------------------------------------------
 
+## Figuring out the number of orders per date
+
 ```sql
 -- Figuring out the number of orders per date
-SELECT DISTINCT invoicedate,
-       COUNT(invoice) OVER(PARTITION BY invoicedate) AS Number_Of_Orders
-FROM tableretail
-ORDER BY Number_Of_Orders DESC;
+  SELECT  DISTINCT invoicedate            AS date,
+          COUNT(invoice)                  AS Number_Of_Orders
+    FROM  tableretail
+GROUP BY  1
+ORDER BY  2 DESC;
 ```
 
 ***Output Sample:***
 
-|  INVOICEDATE    |  NUMBER_OF_ORDERS    |
+|  DATE    |  NUMBER_OF_ORDERS    |
 |     :---:    |     :---:    |
-| 11/17/2011 14:26 | 153 |
+| 11/17/2011 14:26 | 154 |
 | 9/28/2011 15:21 | 141 |
 | 11/8/2011 14:22 | 140 |
 | 9/11/2011 14:15 | 139 |
@@ -59,80 +66,90 @@ ORDER BY Number_Of_Orders DESC;
 
 ------------------------------------------------------
 
+## Figuring out the quantities ordered per date
+
 ```sql
 -- Figuring out the quantities ordered per date
-SELECT DISTINCT invoicedate,
-            SUM(quantity) OVER(PARTITION BY invoicedate) as Total_Quantities_Per_Date
-FROM tableretail
-ORDER BY Total_Quantities_Per_Date DESC;
+  SELECT  DISTINCT invoicedate            AS date,
+          SUM(quantity)                   AS Total_Quantities_Per_Date
+    FROM  tableretail
+GROUP BY  1
+ORDER BY  2 DESC;
+
 ```
 
 ***Output Sample:***
 
-|  INVOICEDATE    |  TOTAL_QUANTITIES_PER_DATE    |
+|  DATE    |  TOTAL_QUANTITIES_PER_DATE    |
 |     :---:    |     :---:    |
-| 8/4/2011 18:06 | 11848 |
-| 8/11/2011 15:58 | 6098 |
-| 10/27/2011 12:26 | 4936 |
-| 5/23/2011 13:08 | 3863 |
-| 11/9/2011 13:56 | 3684 |
-| 6/21/2011 10:53 | 2668 |
-| 9/9/2011 15:02 | 2352 |
-| 7/28/2011 17:17 | 2064 |
-| 9/28/2011 15:21 | 1816 |
-| 9/19/2011 13:39 | 1788 |
+| 8/4/2011 18:06 | 11,848 |
+| 8/11/2011 15:58 | 6,098 |
+| 10/27/2011 12:26 | 4,936 |
+| 5/23/2011 13:08 | 3,863 |
+| 11/9/2011 13:56 | 3,684 |
+| 6/21/2011 10:53 | 2,668 |
+| 9/9/2011 15:02 | 2,352 |
+| 7/28/2011 17:17 | 2,064 |
+| 9/28/2011 15:21 | 1,816 |
+| 9/19/2011 13:39 | 1,788 |
 
 ------------------------------------------------------
+
+## Figuring Out the Highest Revenue Made Throughout the Day
 
 ```sql
 -- Figuring out the highest revenue made throughout the day
-SELECT DISTINCT invoicedate,
-            ROUND(SUM(price*quantity) OVER(PARTITION BY invoicedate),0) AS Total_Price_Of_Orders
-FROM tableretail
-ORDER BY Total_Price_Of_Orders DESC;
+  SELECT  DISTINCT invoicedate            AS date,	
+          SUM(price * quantity)           AS Total_Price_Of_Orders
+    FROM  tableretail
+GROUP BY  1
+ORDER BY  2 DESC;
 ```
 
 ***Output Sample:***
 
 
-|  INVOICEDATE    |  TOTAL_PRICCE_OF_ORDERS    |
+|  DATE    |  TOTAL_PRICCE_OF_ORDERS    |
 |     :---:    |     :---:    |
-| 8/4/2011 18:06 | 18841 |
-| 8/11/2011 15:58 | 9350 |
-| 11/9/2011 13:56 | 4961 |
-| 2/14/2011 9:47 | 3376 |
-| 5/23/2011 13:08 | 2844 |
-| 3/24/2011 18:25 | 2279 |
-| 6/21/2011 10:53 | 2222 |
-| 11/17/2011 12:39 | 2210 |
-| 9/11/2011 14:15 | 2027 |
-| 9/22/2011 15:03 | 1937 |
+| 8/4/2011 18:06 | 18,841 |
+| 8/11/2011 15:58 | 9,350 |
+| 11/9/2011 13:56 | 4,961 |
+| 2/14/2011 9:47 | 3,376 |
+| 5/23/2011 13:08 | 2,844 |
+| 3/24/2011 18:25 | 2,279 |
+| 6/21/2011 10:53 | 2,222 |
+| 11/17/2011 12:39 | 2,210 |
+| 9/11/2011 14:15 | 2,027 |
+| 9/22/2011 15:03 | 1,937 |
 
 ------------------------------------------------------
 
+## Figuring Out the Highest Paid Customers per Interval
+
 ```sql
---  Figuring out the highest paid customers per interval
-SELECT DISTINCT customer_id,
-       invoicedate,
-       ROUND(SUM(price*quantity) OVER(PARTITION BY customer_id, invoicedate),0) AS Total_Price
-FROM tableretail
-ORDER BY Total_Price DESC;
+-- Figuring out the highest paid customers per interval
+  SELECT  DISTINCT customer_id            AS customer_id,
+          invoicedate                     AS date,
+          SUM(price * quantity)           AS Total_Price
+    FROM  tableretail
+GROUP BY  1, 2
+ORDER BY  3 DESC;
 ```
 ***Output Sample:***
 
 
-|  CUSTOMER_ID    |  INVOICEDATE    |  TOTAL_PRICE    |
+|  CUSTOMER_ID    |  DATE    |  TOTAL_PRICE    |
 |     :---:    |     :---:    |     :---:    |
-| 12931 | 8/4/2011 18:06 | 18841 |
-| 12931 | 8/11/2011 15:58 | 9350 |
-| 12931 | 11/9/2011 13:56 | 4961 |
-| 12939 | 2/14/2011 9:47 | 3376 | 
-| 12901 | 5/23/2011 13:08 | 2844 |
-| 12901 | 3/24/2011 18:25 | 2279 |
-| 12830 | 6/21/2011 10:53 | 2222 |
-| 12931 | 11/17/2011 12:39 | 2210 |
-| 12748 | 9/11/2011 14:15 | 2027 |
-| 12906 | 9/22/2011 15:03 | 1937 |
+| 12931 | 8/4/2011 18:06 | 18,841 |
+| 12931 | 8/11/2011 15:58 | 9,350 |
+| 12931 | 11/9/2011 13:56 | 4,961 |
+| 12939 | 2/14/2011 9:47 | 3,376 | 
+| 12901 | 5/23/2011 13:08 | 2,844 |
+| 12901 | 3/24/2011 18:25 | 2,279 |
+| 12830 | 6/21/2011 10:53 | 2,222 |
+| 12931 | 11/17/2011 12:39 | 2,210 |
+| 12748 | 9/11/2011 14:15 | 2,027 |
+| 12906 | 9/22/2011 15:03 | 1,937 |
 
 ### Quick Insights:
 - There's a total order of 717 and 110 customers, They are all based in the UK.
