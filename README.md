@@ -1,19 +1,15 @@
-# RFM Marketing Analysis with Analytical SQL
+# RFM-Based Customer Segmentation for Strategic Insights
 
-Marketing Analysis on an online store using RFM Analytical Model with Analytical SQL
+This project focuses on customer segmentation using RFM (Recency, Frequency, Monetary) analysis, a proven method for identifying and categorizing customers based on their purchasing behavior. By assigning scores to each RFM metric and classifying customers into meaningful segments (e.g., Champions, Loyal Customers, At Risk, Lost), businesses can optimize marketing strategies, improve customer retention, and drive revenue growth.
 
-### What's RFM Analysis?
-***RFM*** Stands for ***Recency***, ***Frequency*** and ***Monetary*** which is a form of analysis often used in Marketing which segments customers based on those 3 factors.
+### Questions that can be answered through the project:
 
-### Questions answered in this project:
-
-- What's the total number of customers, orders and the avg total paid price)
-- Total number of orders made based on time intervals
-- Total quantities sold based on time intervals
-- Total price paid per time interval
-- Total price paid per time interval per customer
-- Segmenting customers based on their ***recent paid order***, ***order frequency*** and ***how much s/he pays***
-
+- Who are our most valuable customers?
+- Which customers are at risk of churning?
+- Which customers used to buy frequently but have stopped?
+- Which customers should receive re-engagement campaigns?
+- Which customers are most likely to respond to upsell or cross-sell offers?
+- How can we optimize loyalty programs for different customer segments?
 
 ------------------------------------------------------
 
