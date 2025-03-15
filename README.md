@@ -162,135 +162,63 @@ ORDER BY  3 DESC;
 
 ## Customer Segmentation using RFM
 
-### Step #1
-***Extracting the highest date of each employee along with their order frequency and total price paid***
 ```sql
 -- Step #1 - Extracting the highest date of each employee along with their order frequency and total price paid
-SELECT customer_id,
-       MAX(TO_DATE(invoicedate, 'MM/DD/YYYY HH24:MI')) AS Last_Date,
-       COUNT(invoice) AS Order_Count,
-       SUM(price*quantity) AS Total_Price
-FROM tableretail
-GROUP BY customer_id
-ORDER BY customer_id;
-```
+WITH rfm_base AS(
+    SELECT   DISTINCT customer_id                              AS customer_id,
+             MAX(TO_DATE(invoicedate, 'MM/DD/YYYY HH24:MI'))   AS Last_order_Date,
+             COUNT(invoice)                                    AS order_count,
+             SUM(price * quantity)                             AS total_price
+      FROM   tableretail
+  GROUP BY   1
+),
 
-### Step #2
-***Figuring out the recency of ordering per customer***
-```sql
--- Step #2 figuring out the recency of ordering per customer
-SELECT customer_id,
-            Last_Date,
-            ROUND((ROUND(MONTHS_BETWEEN(TO_DATE('12/9/2011 12:20','MM/DD/YYYY HH24:MI'),Last_Date),2)/30)*1000,0) Recency,
-            Order_Count,
-            Total_Price
-FROM (SELECT customer_id,
-             MAX(TO_DATE(invoicedate, 'MM/DD/YYYY HH24:MI')) AS Last_Date,
-             COUNT(invoice) AS Order_Count,
-             SUM(price*quantity) AS Total_Price
-     FROM tableretail
-     GROUP BY customer_id
-     ORDER BY customer_id) inner_table
-ORDER BY Recency;
-```
+rfm AS(
+    SELECT   customer_id                                       AS customer_id,
+             CURRENT_DATE - Last_order_Date                    AS recency,
+             order_count                                       AS order_count,
+             total_price                                       AS total_price
+      FROM   rfm_base
+),
 
-### Step #3
-***Using NTILE to segment the 2 factors (Recency and Monetary) *removed frequency since it indicates the volume as Monetary does* to segment customers in the next step***
-```sql
--- Step #3 using NTILE to segment the 2 factors (Recency and Monetary) *removed frequency since it indicates the volume as Monetary does* to segment customers in the next step
-SELECT customer_id,
-       NTILE(5) OVER(ORDER BY Recency) AS Recency,
-       NTILE(5) OVER(ORDER BY Total_Price) AS Monetary
-FROM( SELECT customer_id,
-             Last_Date,
-             ROUND((ROUND(MONTHS_BETWEEN(TO_DATE('12/9/2011 12:20','MM/DD/YYYY HH24:MI'),Last_Date),2)/30)*1000,0) Recency,
-             Order_Count,
-             Total_Price
-       FROM (SELECT customer_id,
-                    MAX(TO_DATE(invoicedate, 'MM/DD/YYYY HH24:MI')) AS Last_Date,
-                    COUNT(invoice) AS Order_Count,
-                    SUM(price*quantity) AS Total_Price
-             FROM tableretail
-             GROUP BY customer_id
-             ORDER BY customer_id) inner_table) outer_table;
-```
-
-### Step #4
-***Segmenting the customers based on (Recency and Monetary) Scores***
-```sql
--- Step #4 Segmenting the customers based on (Recency and Monetary) Scores
-WITH customer_segment AS
-(
-SELECT customer_id,
-            NTILE(5) OVER(ORDER BY Recency) AS Recency,
-            NTILE(5) OVER(ORDER BY Total_Price) AS Monetary
-FROM( SELECT customer_id,
-            Last_Date,
-            ROUND((ROUND(MONTHS_BETWEEN(TO_DATE('12/9/2011 12:20','MM/DD/YYYY HH24:MI'),Last_Date),2)/30)*1000,0) Recency,
-            Order_Count,
-            Total_Price
-            FROM (SELECT customer_id,
-                                    MAX(TO_DATE(invoicedate, 'MM/DD/YYYY HH24:MI')) AS Last_Date,
-                                    COUNT(invoice) AS Order_Count,
-                                    SUM(price*quantity) AS Total_Price
-                        FROM tableretail
-                        GROUP BY customer_id
-                        ORDER BY customer_id) inner_table) outer_table
+customer_segment_base AS(
+    SELECT   customer_id                                       AS customer_id,
+             NTILE(5) OVER(ORDER BY recency)                   AS recency,
+             NTILE(5) OVER(ORDER BY order_count)               AS frequency,
+             NTILE(5) OVER(ORDER BY total_price)               AS monetary
+      FROM   rfm
 )
 
--- Segmenting Customers
-SELECT customer_id,
-            Recency,
-            Monetary,
-            CASE WHEN Recency = 5 AND Monetary = 5 THEN 'Champions'
-                     WHEN Recency = 4 AND Monetary = 5 THEN 'Champions'
-                     WHEN Recency = 5 AND Monetary = 4 THEN 'Champions'
-                     WHEN Recency = 5 AND Monetary = 2 THEN 'Potential Loyalists'
-                     WHEN Recency = 4 AND Monetary = 2 THEN 'Potential Loyalists'
-                     WHEN Recency = 4 AND Monetary = 3 THEN 'Potential Loyalists'
-                     WHEN Recency = 3 AND Monetary = 3 THEN 'Potential Loyalists'
-                     WHEN Recency = 5 AND Monetary = 3 THEN 'Loyal Customers'
-                     WHEN Recency = 4 AND Monetary = 4 THEN 'Loyal Customers'
-                     WHEN Recency = 3 AND Monetary = 5 THEN 'Loyal Customers'
-                     WHEN Recency = 3 AND Monetary = 4 THEN 'Loyal Customers'
-                     WHEN Recency = 5 AND Monetary = 1 THEN 'Recent Customers'
-                     WHEN Recency = 4 AND Monetary = 1 THEN 'Promising'
-                     WHEN Recency = 3 AND Monetary = 1 THEN 'Promising'
-                     WHEN Recency = 3 AND Monetary = 2 THEN 'Customers Needing Attention'
-                     WHEN Recency = 2 AND Monetary = 3 THEN 'Customers Needing Attention'
-                     WHEN Recency = 2 AND Monetary = 2 THEN 'Customers Needing Attention'
-                     WHEN Recency = 2 AND Monetary = 5 THEN 'At Risk'
-                     WHEN Recency = 2 AND Monetary = 4 THEN 'At Risk'
-                     WHEN Recency = 1 AND Monetary = 3 THEN 'At Risk'
-                     WHEN Recency = 1 AND Monetary = 5 THEN 'Cannot Lose Them'
-                     WHEN Recency = 1 AND Monetary = 4 THEN 'Cannot Lose Them'
-                     WHEN Recency = 1 AND Monetary = 2 THEN 'Hibernating'
-                     WHEN Recency = 1 AND Monetary = 1 THEN 'Lost'
-            END Customer_Segment
-FROM customer_segment
-ORDER BY Recency DESC, Monetary DESC;
+  SELECT   customer_id,
+           recency,
+           frequency,
+           monetary,
+           CASE WHEN (recency + frequency + monetary) = 15             THEN 'Champions'
+                WHEN (recency + frequency + monetary) >= 12            THEN 'Loyal Customers'
+                WHEN (recency + frequency + monetary) BETWEEN 9 AND 11 THEN 'Potential Loyalists'
+                WHEN (recency + frequency + monetary) BETWEEN 6 AND 8  THEN 'Customers Needing Attention'
+                WHEN (recency + frequency + monetary) BETWEEN 4 AND 5  THEN 'Hibernating'
+                WHEN (recency + frequency + monetary) <= 3             THEN 'Lost'
+           END AS customer_segment
+     FROM   customer_segment_base
+ ORDER BY   2 DESC,
+            3 DESC,
+            4 DESC;
 ```
 
-***Output Sample:***
+***Final Output Sample:***
 
 
-|  CUSTOMER_ID    |  RECENCY    |  MONETARY    |  CUSTOMER_SEGMENT    |
-|     :---:    |     :---:    |     :---:    |     :---:    |
-| 12868 | 5 | 4 | Champions |
-| 12967 | 5 | 4 | Champions |
-| 12908 | 5 | 3 | Loyal Customers |
-| 12878 | 5 | 3 | Loyal Customers |
-| 12857 | 5 | 3 | Loyal Customers |
-| 12872 | 5 | 3 | Loyal Customers |
-| 12891 | 5 | 2 | Potential Loyalists |
-| 12845 | 5 | 2 | Potential Loyalists |
-| 12888 | 5 | 2 | Potential Loyalists |
-| 12873 | 5 | 2 | Potential Loyalists |
-
-------------------------------------------------------
-### Conclusion:
-- Based on our customer segmentation analysis, we have identified five distinct customer groups, with scores ranging from 1 to 5. With this information, we can recommend to the marketing team to focus on developing a customized plan to target customers who have a score of 3 to 5. These customers are highly active and considered loyal, and nurturing their loyalty through targeted marketing efforts can help retain them.
-- On the other hand, customers with a score of 1 and 2 are most likely churned, and any marketing plan may not be as effective in re-engaging them. By focusing on the right customer groups, the marketing team can optimize their efforts and achieve better results.
+| customer_id | recency | frequency | monetary | customer_segment               |
+|------------|---------|-----------|----------|--------------------------------|
+| 12868      | 5       | 4         | 4        | Loyal Customers                |
+| 12872      | 5       | 4         | 3        | Loyal Customers                |
+| 12878      | 5       | 3         | 3        | Potential Loyalists            |
+| 12857      | 5       | 3         | 3        | Potential Loyalists            |
+| 12967      | 5       | 2         | 4        | Potential Loyalists            |
+| 12845      | 5       | 2         | 2        | Potential Loyalists            |
+| 12908      | 5       | 1         | 3        | Potential Loyalists            |
+| 12891      | 5       | 1         | 2        | Customers Needing Attention    |
 
 ------------------------------------------------------
 
