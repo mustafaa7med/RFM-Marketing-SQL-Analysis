@@ -159,7 +159,6 @@ ORDER BY  3 DESC;
 ## Customer Segmentation using RFM
 
 ```sql
--- Step #1 - Extracting the highest date of each employee along with their order frequency and total price paid
 WITH rfm_base AS(
     SELECT   DISTINCT customer_id                              AS customer_id,
              MAX(TO_DATE(invoicedate, 'MM/DD/YYYY HH24:MI'))   AS Last_order_Date,
@@ -196,10 +195,10 @@ customer_segment_base AS(
                 WHEN (recency + frequency + monetary) BETWEEN 4 AND 5  THEN 'Hibernating'
                 WHEN (recency + frequency + monetary) <= 3             THEN 'Lost'
            END AS customer_segment
-     FROM   customer_segment_base
- ORDER BY   2 DESC,
-            3 DESC,
-            4 DESC;
+     FROM  customer_segment_base
+ ORDER BY  2 DESC,
+           3 DESC,
+           4 DESC;
 ```
 
 ***Final Output Sample:***
